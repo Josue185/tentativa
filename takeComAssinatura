@@ -1,0 +1,130 @@
+function waitForElemente(selector) {
+    return new Promise(resolve=>{
+        if (document.querySelector(selector)) {
+            return resolve(document.querySelector(selector));
+        }
+
+        const observer = new MutationObserver(mutations=>{
+            if (document.querySelector(selector)) {
+                resolve(document.querySelector(selector));
+                observer.disconnect();
+            }
+        }
+        );
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+    );
+}
+
+function g_Appointment() {
+    let dateTime = Array.from(document.querySelectorAll('cuf-form-field')).filter(function(e) {
+        return e.innerText.includes('Time')
+    })[0].innerText.split('\n')[1]
+    dateTime = new Date(dateTime)
+    let date = dateTime.toLocaleDateString()
+    let time = dateTime.toLocaleTimeString().split(':').slice(0, 2).join(':')
+    return `${date} às ${time}`
+}
+
+function returnName() {
+    document.querySelector('img[class*="photo"]').click()
+    setTimeout(function() {
+        g_agent_name = document.querySelector("profile-details > div > div.name").innerText
+    }, 300)
+    return g_agent_name
+}
+
+function returnPhone() {
+    if (document.querySelector('[aria-label="View hidden phone number"]') && document.querySelector('[aria-label="View hidden phone number"]').click()) {}
+    setTimeout(function() {
+        g_phoneNumber = document.querySelector('[debugid="pii-phone-value"]').innerText.replace(' ', '')
+    }, 1000)
+    return g_phoneNumber
+}
+
+function returnTemplate() {
+    return `<div id=email-body-content-top-content style="font:normal 13px/17px Roboto,sans-serif;display:block" dir=auto>
+    <p dir=ltr><br></p>
+    <p dir=auto>Olá <span style=font-weight:700;color:#1a73e8>${g_client_name}<br></span></p>
+    <p dir=auto style=font-weight:400>Aqui é <span style=font-weight:700;color:#1a73e8>${g_agent_name}</span> da equipe de Soluções Técnicas do Google. <br>Tentei ligar no seguinte número: <span style=font-weight:700;color:#1a73e8>${g_phoneNumber}</span>, sem sucesso, teria outro número para que eu possa entrar em contato?&nbsp;<br><br>Sua consultoria estava marcada para hoje, com o objetivo de lhe auxiliar a implementar a seguinte tarefa:<br></p>
+    <div dir=auto style=font-weight:700;color:red><b>${g_tasks}</b><br></div>
+    <p dir=auto><br>Em seu site:&nbsp;<a href=${g_website} target=_blank class=ignore-globals style=color:#1a73e8;text-decoration-line:none><b>${g_website}</b></a><br><br> </p>
+    <p dir=auto style=font-weight:400>Tentarei ligar novamente dentro de 10 minutos, caso prefira, você pode acessar o link da nossa reunião:<span style=font-weight:700> </span><span style=font-weight:700>&lt;&lt;Link do Meet&gt;&gt;<br><br></span></p>
+    <p dir=auto style=font-weight:400><br>Atenciosamente,</p>
+    <span style=color:green>${g_agent_name}<br> Time de Soluções Técnicas <br> Cognizant, em nome do Google</span></div>`
+}
+
+// Adiciona o email do cliente como destinatário
+function setCustumerEmail() {
+    document.querySelector('span[class*="button-text"]').click()
+    setTimeout(function() {
+        Array.from(document.querySelectorAll('span[class*="label"]')).filter(function(e) {
+            return e.innerText === 'Customer'
+        })[0].click()
+    }, 500)
+}
+
+function emailInMenu() {
+    let menu = document.querySelector('[role="menu"]') || document.querySelector('[aria-label="Create a write card"]')
+    menu.dispatchEvent(new Event('focus', { 'bubbles': true }))
+    setTimeout(function() {
+      document.querySelector('[aria-label="Create new email"]').click()
+    }, 500)
+}
+
+// Altera o email para o email do Techincal Solutions
+function technicalSolutions() {
+    waitForElemente('[buttoncontent][class*="address"]').then((elm)=>{
+        console.log('[+] techincal')
+        elm.click()
+    }
+    );
+
+    waitForElemente('[id="email-address-id--technical-solutions@google.com"]').then((elm)=>{
+        console.log('[+] techincal 2')
+        elm.click()
+    }
+    );
+}
+
+// Retorna o conteúdo do email a ser editado
+function myCase() {
+    return Array.from(document.querySelectorAll('[id="email-body-content-top-content"]')).pop()
+}
+
+// Salva a edição realizada
+function saveDraft() {
+    Array.from(document.querySelectorAll('[contenteditable="true"]')).filter(function(e) {
+        return e.matches('[aria-label="Email body"]')
+    })[0].focus()
+    document.execCommand('insertText', false, ' ')
+}
+
+document.querySelector('[debug-id="dock-item-home"]').click()
+var g_agent_name = returnName()
+var g_phoneNumber = returnPhone()
+var g_id_case = document.querySelector('[src="https://pulse-tracker.corp.google.com/tracking_script.js"]').getAttribute('data-case-id')
+var g_client_name = document.querySelector('title').innerText.split(' ')[1]
+var g_website = Array.from(document.querySelectorAll('[href*="google"][target="_blank"]'))[0].innerText
+//var g_website = Array.from(document.querySelectorAll('cuf-form-field')).filter(function (e) { return e.innerText.includes('Website') })[0].innerText.split('\n')[1]
+var g_appointment = g_Appointment()
+var g_tasks = Array.from(document.querySelectorAll('cuf-form-field')).filter(function(e) {
+    return e.innerText.includes('Tasks')
+})[0].innerText.split('\n').slice(1,3).join(', ')
+
+console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+setCustumerEmail()
+setTimeout(function() {
+    emailInMenu()
+    setTimeout(function() {
+        var g_template = returnTemplate()
+        technicalSolutions()
+        console.log(g_agent_name)
+        myCase().innerHTML = g_template
+        saveDraft()
+    }, 1500)
+}, 500)
